@@ -7,32 +7,109 @@
       href="https://unpkg.com/bootstrap@5.1.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="icon" type="image/x-icon" sizes="16x16 32x32" href="favicon.ico">
     <title>Image Cropper</title>
     <style>
       body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%);
+        font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+        color: #222;
         display: flex;
         justify-content: center;
         align-items: center;
-        /* background-color: #eeeeee; */
+      }
+
+      .container {
+        background: #fff;
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        padding: 2.5rem 2rem 2rem 2rem;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        max-width: 800px;
+      }
+
+      h3 {
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.5rem;
+      }
+
+      .text-success {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
       }
 
       .drop-area {
-        width: 300px;
-        height: 300px;
-        border: 2px dashed #ccc;
+        width: 320px;
+        height: 320px;
+        border: 2.5px dashed #7b8acc;
+        border-radius: 1.2rem;
+        background: linear-gradient(135deg, #f3f6fb 0%, #e9eefa 100%);
+        color: #7b8acc;
+        font-size: 1.1rem;
+        font-weight: 500;
         display: flex;
         justify-content: center;
         align-items: center;
         cursor: pointer;
         margin-top: 20px;
         margin-bottom: 20px;
-        background-color: whitesmoke;
+        transition: border-color 0.2s, background 0.2s;
+        box-shadow: 0 2px 8px rgba(123,138,204,0.07);
+      }
+      .drop-area:hover, .drop-area:focus {
+        border-color: #4f5fa3;
+        background: #f0f4ff;
       }
 
       .preview {
-        border: 1px solid #ccc;
-        background-color: whitesmoke;
+        border: none;
+        border-radius: 1.2rem;
+        background: #f3f6fb;
+        box-shadow: 0 2px 8px rgba(123,138,204,0.07);
+        margin-bottom: 0.5rem;
+      }
+
+      .slider-group {
+        background: #f8fafc;
+        border-radius: 1rem;
+        box-shadow: 0 1px 4px rgba(123,138,204,0.04);
+        padding: 1.2rem 1rem 0.5rem 1rem;
+        margin-bottom: 1.2rem;
+        width: 100%;
+      }
+      .form-label {
+        font-weight: 500;
+        color: #4f5fa3;
+      }
+      .form-range {
+        accent-color: #7b8acc;
+      }
+      .btn-light {
+        background: linear-gradient(90deg, #e9eefa 0%, #f3f6fb 100%);
+        border: 1px solid #d1d9e6;
+        color: #4f5fa3;
+        font-weight: 500;
+        border-radius: 0.7rem;
+        box-shadow: 0 1px 4px rgba(123,138,204,0.04);
+        transition: background 0.2s, color 0.2s;
+      }
+      .btn-light:hover {
+        background: #dbe3f7;
+        color: #2d365a;
+      }
+      @media (max-width: 768px) {
+        .container {
+          padding: 1.2rem 0.5rem 1rem 0.5rem;
+        }
+        .drop-area {
+          width: 95vw;
+          height: 40vw;
+          min-height: 180px;
+        }
       }
     </style>
   </head>
@@ -44,26 +121,26 @@
       >
       <div class="row">
         <div class="col-md-12 d-flex flex-column align-items-center">
-          <div class="drop-area mb-3 p-3">Drop your image here</div>
+          <div class="drop-area mb-3 p-3" tabindex="0">Drop your image here</div>
         </div>
       </div>
       <div class="row mt-3">
         <div class="col-md-6 d-flex flex-column align-items-center">
-          <h5>Cropped Image</h5>
+          <h5 class="mb-3">Cropped Image</h5>
           <canvas
             id="preview"
             class="preview"
             width="200"
             height="200"
           ></canvas>
-          <div class="mt-3">
-            <button id="download-png" class="btn btn-sm btn-light me-3">
-              Download PNG
+          <div class="mt-3 d-flex flex-row gap-2">
+            <button id="download-png" class="btn btn-light me-2">
+              <i class="bi bi-image"></i> Download PNG
             </button>
           </div>
         </div>
         <div class="col-md-4 d-flex flex-column align-items-center">
-          <div class="mt-3">
+          <div class="slider-group mt-3">
             <label for="size-slider" class="form-label"
               >Output size: <span id="size-value">256</span></label
             >
@@ -77,7 +154,7 @@
               step="16"
             />
           </div>
-          <div class="mt-3">
+          <div class="slider-group mt-3">
             <label for="roundness-slider" class="form-label"
               >Roundness: <span id="roundness-value">1.0</span></label
             >
@@ -91,7 +168,7 @@
               step="0.1"
             />
           </div>
-          <div class="mt-3">
+          <div class="slider-group mt-3">
             <label for="zoom-slider" class="form-label"
               >Zoom: <span id="zoom-value">0</span>%</label
             >
@@ -104,7 +181,7 @@
               value="0"
             />
           </div>
-          <div class="mt-3">
+          <div class="slider-group mt-3">
             <label for="x-center-slider" class="form-label"
               >X Center: <span id="x-center-value">50</span>%</label
             >
@@ -117,7 +194,7 @@
               value="50"
             />
           </div>
-          <div class="mt-3">
+          <div class="slider-group mt-3">
             <label for="y-center-slider" class="form-label"
               >Y Center: <span id="y-center-value">50</span>%</label
             >
