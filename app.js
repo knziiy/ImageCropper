@@ -25,7 +25,7 @@ function loadImage(src) {
   });
 }
 
-function circleCropImage(image, size, roundness, xCenter, yCenter, zoom) {
+function circleCropImage(image, size, roundness, xCenter, yCenter, zoom, outputScale = 1) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   const minDimension = Math.min(image.width, image.height) * ((100 - zoom) / 100);
@@ -33,27 +33,31 @@ function circleCropImage(image, size, roundness, xCenter, yCenter, zoom) {
   const sx = (image.width - minDimension) * xCenter / 100;
   const sy = (image.height - minDimension) * yCenter / 100;
 
-  canvas.width = canvas.height = size;
+  // 出力解像度をoutputScale倍に
+  canvas.width = canvas.height = size * outputScale;
 
-  const borderRadius = (size / 2) * roundness;
+  const borderRadius = (size * outputScale / 2) * roundness;
   ctx.beginPath();
   ctx.moveTo(borderRadius, 0);
-  ctx.lineTo(size - borderRadius, 0);
-  ctx.arcTo(size, 0, size, borderRadius, borderRadius);
-  ctx.lineTo(size, size - borderRadius);
-  ctx.arcTo(size, size, size - borderRadius, size, borderRadius);
-  ctx.lineTo(borderRadius, size);
-  ctx.arcTo(0, size, 0, size - borderRadius, borderRadius);
+  ctx.lineTo(canvas.width - borderRadius, 0);
+  ctx.arcTo(canvas.width, 0, canvas.width, borderRadius, borderRadius);
+  ctx.lineTo(canvas.width, canvas.height - borderRadius);
+  ctx.arcTo(canvas.width, canvas.height, canvas.width - borderRadius, canvas.height, borderRadius);
+  ctx.lineTo(borderRadius, canvas.height);
+  ctx.arcTo(0, canvas.height, 0, canvas.height - borderRadius, borderRadius);
   ctx.lineTo(0, borderRadius);
   ctx.arcTo(0, 0, borderRadius, 0, borderRadius);
   ctx.closePath();
 
   ctx.clip();
-  ctx.drawImage(image, sx, sy, minDimension, minDimension, 0, 0, size, size);
+  ctx.drawImage(
+    image,
+    sx, sy, minDimension, minDimension,
+    0, 0, canvas.width, canvas.height
+  );
 
   return canvas;
 }
-
 
 function handleImageDrop(event) {
   event.preventDefault();
@@ -84,9 +88,30 @@ function updatePreview() {
   sizeValue.textContent = size;
   roundnessValue.textContent = roundness.toFixed(1);
   if (currentImage) {
-    const croppedCanvas = circleCropImage(currentImage, size, roundness, xCenter, yCenter, zoom);
-    ctx.drawImage(croppedCanvas, 0, 0);
+    // プレビューは1倍スケール
+    const croppedCanvas = circleCropImage(currentImage, size, roundness, xCenter, yCenter, zoom, 1);
+    ctx.clearRect(0, 0, preview.width, preview.height);
+    ctx.drawImage(croppedCanvas, 0, 0, preview.width, preview.height);
   }
+}
+
+function downloadImage(format) {
+  const size = parseInt(sizeSlider.value);
+  const roundness = parseFloat(roundnessSlider.value);
+  const xCenter = parseInt(xCenterSlider.value);
+  const yCenter = parseInt(yCenterSlider.value);
+  const zoom = parseInt(zoomSlider.value);
+  if (!currentImage) return;
+
+  // 元画像の短辺を基準に最大解像度で出力（倍率）
+  const maxOutput = Math.min(currentImage.width, currentImage.height);
+  const outputScale = Math.max(1, Math.floor(maxOutput / size));
+  const exportCanvas = circleCropImage(currentImage, size, roundness, xCenter, yCenter, zoom, outputScale);
+
+  const link = document.createElement("a");
+  link.href = exportCanvas.toDataURL(`image/${format}`);
+  link.download = `cropped-image.${format}`;
+  link.click();
 }
 
 sizeSlider.addEventListener("input", updatePreview);
@@ -94,14 +119,6 @@ roundnessSlider.addEventListener("input", updatePreview);
 xCenterSlider.addEventListener("input", updatePreview);
 yCenterSlider.addEventListener("input", updatePreview);
 zoomSlider.addEventListener("input", updatePreview);
-
-function downloadImage(format) {
-  const link = document.createElement("a");
-  link.href = preview.toDataURL(`image/${format}`);
-  link.download = `cropped-image.${format}`;
-  link.click();
-}
-
 downloadPngButton.addEventListener("click", () => downloadImage("png"));
 
 dropArea.addEventListener("dragover", (event) => event.preventDefault());
